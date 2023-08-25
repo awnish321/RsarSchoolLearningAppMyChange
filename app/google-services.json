@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1092256117004",
+    "firebase_url": "https://rsarschoolmodel.firebaseio.com",
+    "project_id": "rsarschoolmodel",
+    "storage_bucket": "rsarschoolmodel.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092256117004:android:d0b2ddf2d4b8768c77d929",
+        "android_client_info": {
+          "package_name": "rsarschoolmodel.com.rsarschoolmodel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1092256117004-pp2u877e4nev2i9888hfa3gqmqe0c44h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBKmrpTvttAaKNTUabS2tvZSDIoDCfPn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1092256117004-pp2u877e4nev2i9888hfa3gqmqe0c44h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
