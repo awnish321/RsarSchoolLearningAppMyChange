@@ -8,5 +8,8 @@
     <dimen name="menu_entries_sides_padding">8dp</dimen>
     <dimen name="menu_entries_top_down_padding">8dp</dimen>
     <dimen name="menu_entries_top_down_radio_padding">3dp</dimen>
+    <dimen name="_5sdp">5dp</dimen>
+    <dimen name="dimen_10dp">10dp</dimen>
+    <dimen name="dimen_15dp">15dp</dimen>
 
 </resources>

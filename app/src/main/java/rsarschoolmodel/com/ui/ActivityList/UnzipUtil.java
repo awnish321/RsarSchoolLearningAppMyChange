@@ -26,30 +26,22 @@ public class UnzipUtil {
       ZipInputStream zin = new ZipInputStream(fin); 
       ZipEntry ze = null; 
       while ((ze = zin.getNextEntry()) != null) { 
-        Log.v("Decompress", "Unzipping " + ze.getName()); 
- 
+
         if(ze.isDirectory()) { 
           _dirChecker(ze.getName()); 
         } else { 
           FileOutputStream fout = new FileOutputStream(_location + ze.getName()); 
-       //   for (int c = zin.read(); c != -1; c = zin.read()) { 
-         //   fout.write(c); 
-            
-            
+
             byte[] buffer = new byte[8192];
 	         int len;
 	         while ((len = zin.read(buffer)) != -1) {
 	        	 fout.write(buffer, 0, len);
 	         }
 	         fout.close();
-            
-        //  } 
- 
+        //  }
           zin.closeEntry(); 
          // fout.close(); 
-          
-          
-        
+
         } 
          
       } 
@@ -65,9 +57,7 @@ public class UnzipUtil {
  
     if(!f.isDirectory()) { 
       f.mkdirs(); 
-      
-      
-    
+
     } 
   } 
 } 

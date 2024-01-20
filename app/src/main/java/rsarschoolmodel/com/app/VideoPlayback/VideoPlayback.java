@@ -145,10 +145,6 @@ public class VideoPlayback extends Activity implements
     private int[] myImageList = new int[]{R.drawable.img4
             ,R.drawable.img5};
 
-
-
-
-
     // Called when the activity first starts or the user navigates back
     // to an activity.
     protected void onCreate(Bundle savedInstanceState)

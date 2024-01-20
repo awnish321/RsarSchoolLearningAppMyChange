@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "rsarschoolmodel.com.rsarschoolmodel",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 17,
+      "versionName": "2.0.6",
+      "outputFile": "RsarSchoolLearningAppMyChange-release.apk"
+    }
+  ],
+  "elementType": "File"
+}

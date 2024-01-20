@@ -68,7 +68,7 @@ public class GridViewAdapterClass extends BaseAdapter {
 		View rowView;
 
 		rowView = inflater.inflate(R.layout.gridview, null);
-		holder.os_text =(TextView) rowView.findViewById(R.id.textView1);
+		holder.os_text =(TextView) rowView.findViewById(R.id.txtName);
 
 
 		holder.os_text.setText(C_Name.get(position));

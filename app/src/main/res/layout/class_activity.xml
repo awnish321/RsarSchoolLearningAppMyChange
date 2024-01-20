@@ -1,121 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
+    android:id="@+id/Ln_Bottom_Bg"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/Lnr_Bg"
+    <include
+        android:id="@+id/toolbarRegister"
+        layout="@layout/register_page_toolbar" />
+
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dimen_10dp"
+        app:cardCornerRadius="@dimen/dimen_10dp">
 
         <LinearLayout
-            android:id="@+id/Lnr_Top_bg"
+            android:id="@+id/llView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight=".75"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/dimen_10dp"
             android:orientation="vertical">
 
+            <RelativeLayout
+                android:layout_width="125dp"
+                android:layout_height="125dp"
+                android:layout_gravity="center">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <LinearLayout
+                <ImageView
+                    android:id="@+id/Img_School_logo_bg"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_gravity="center"
-                    android:orientation="vertical">
+                    android:layout_height="match_parent"
+                    android:background="@drawable/logo_bg" />
 
-                    <LinearLayout
-                        android:id="@+id/Ln_Logo_Bg"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="15dp"
-                        android:layout_gravity="center"
-                        android:orientation="horizontal">
+                <ImageView
+                    android:id="@+id/Img_School_logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/school_logo" />
 
+            </RelativeLayout>
 
-                        <LinearLayout
-
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_margin="5dp"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:id="@+id/Img_School_logo"
-                                android:layout_width="110dp"
-                                android:background="@drawable/ic_launcher_background"
-                                android:layout_height="110dp"
-                                android:layout_gravity="center"
-                                android:layout_margin="10dp" />
-
-                            <ImageView
-                                android:id="@+id/logout1"
-
-                                android:layout_width="50dp"
-                                android:layout_height="50dp"
-                                android:layout_marginTop="10dp"
-                                android:layout_marginLeft="160dp"
-                                android:layout_gravity="end"
-                                android:background="@drawable/logout"/>
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/Txt_School_Name"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-
-                                android:textSize="18dp"
-                                android:textStyle="bold"
-                                android:layout_gravity="center"
-                                android:text="TextView" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight=".40"
-            android:orientation="vertical">
-
-            <GridView
-                android:id="@+id/Gv_subcat"
+            <TextView
+                android:id="@+id/Txt_School_Name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginTop="20dp"
-                android:horizontalSpacing="15dp"
-                android:numColumns="2"
-                android:verticalSpacing="15dp">
-
-            </GridView>
+                android:layout_gravity="center"
+                android:text="@string/textview"
+                android:layout_marginVertical="@dimen/dimen_10dp"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <GridView
+            android:id="@+id/gvClass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dimen_10dp"
+            android:horizontalSpacing="15dp"
+            android:numColumns="2"
+            android:scrollbars="none"
+            android:verticalSpacing="15dp" />
+
     </LinearLayout>
+
 </LinearLayout>
 
 

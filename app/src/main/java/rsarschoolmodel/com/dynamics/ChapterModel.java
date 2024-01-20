@@ -26,6 +26,10 @@ public class ChapterModel implements Serializable {
     private String Download_Status;
     private String Assesment_Value;
 
+    public ChapterModel() {
+
+    }
+
 
     public String getClass_Name() {
         return Class_Name;

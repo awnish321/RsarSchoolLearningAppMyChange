@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llBg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="rsarschoolmodel.com.ui.ActivityList.ChapterVideoPlayBackActivity">
+
+    <TextView
+        android:id="@+id/txtSubjectName"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:gravity="center"
+        android:text="French"
+        android:textAllCaps="true"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:layout_margin="@dimen/dimen_10dp"
+        app:cardCornerRadius="@dimen/dimen_10dp">
+
+        <TextView
+            android:id="@+id/txtChapName"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="CHAPTER NAME"
+            android:textAllCaps="true"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </androidx.cardview.widget.CardView>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/dimen_10dp"
+        android:orientation="vertical">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_margin="2dp"
+            app:cardCornerRadius="@dimen/dimen_10dp">
+
+            <TextView
+                android:id="@+id/txtScanBook"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:background="@drawable/background_design"
+                android:gravity="center"
+                android:text="@string/start_the_scan"
+                android:textSize="@dimen/menu_title"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+
+            <TextView
+                android:id="@+id/txtDownloadVideo"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:background="@drawable/background_design"
+                android:gravity="center"
+                android:text="@string/download_videos"
+                android:textSize="@dimen/menu_title"
+                android:textStyle="bold" />
+
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="10dp" />
+
+
+</LinearLayout>

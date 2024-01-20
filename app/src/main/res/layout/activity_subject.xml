@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="rsarschoolmodel.com.ui.ActivityList.SubjectListActivity">
+
+    <LinearLayout
+        android:id="@+id/llBg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <include
+            android:id="@+id/toolbarRegister"
+            layout="@layout/register_page_toolbar" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_margin="@dimen/dimen_10dp"
+            app:cardCornerRadius="@dimen/dimen_10dp">
+
+            <TextView
+                android:id="@+id/txtSubjectName"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/subjects"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </androidx.cardview.widget.CardView>
+
+        <GridView
+            android:id="@+id/gvSubject"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dimen_10dp"
+            android:horizontalSpacing="15dp"
+            android:numColumns="2"
+            android:scrollbars="none"
+            android:verticalSpacing="15dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

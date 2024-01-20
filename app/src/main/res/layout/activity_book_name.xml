@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -10,86 +11,39 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+        <include
+            android:id="@+id/toolbarRegister"
+            layout="@layout/register_page_toolbar" />
 
-            <LinearLayout
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_margin="@dimen/dimen_10dp"
+            app:cardCornerRadius="@dimen/dimen_10dp">
+
+            <TextView
+                android:id="@+id/txtSubjectName"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight=".10"
-                android:orientation="vertical">
+                android:text="@string/book_name"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textSize="18sp"/>
 
+        </androidx.cardview.widget.CardView>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight=".88"
+        <GridView
+            android:id="@+id/Gv_bookcat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dimen_10dp"
+            android:horizontalSpacing="15dp"
+            android:numColumns="2"
+            android:scrollbars="none"
+            android:verticalSpacing="15dp">
 
-                    android:orientation="horizontal">
-
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:layout_margin="10dp"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:background="@drawable/button_bg"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/Title_Sub_Chap"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:layout_marginTop="8dp"
-                                android:textColor="#ffffff"
-                                android:textSize="25dp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight=".12"
-                    android:orientation="vertical">
-
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal">
-
-                        <GridView
-                            android:id="@+id/Gv_bookcat"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="10dp"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginRight="10dp"
-                            android:layout_marginTop="20dp"
-                            android:horizontalSpacing="15dp"
-                            android:numColumns="2"
-                            android:verticalSpacing="15dp">
-
-                        </GridView>
-
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-        </LinearLayout>
-
+        </GridView>
 
     </LinearLayout>
+
 </LinearLayout>

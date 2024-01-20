@@ -78,7 +78,7 @@ public class GridViewAdapterChap1 extends BaseAdapter {
 
 			grid = new View(context);
 			grid = inflater.inflate(R.layout.gridview, null);
-			TextView Class_Name = (TextView) grid.findViewById(R.id.textView1);
+			TextView Class_Name = (TextView) grid.findViewById(R.id.txtName);
 
             System.out.println("Valueeee"+" "+C_Name.get(position).toString());
 			Class_Name.setText(C_Name.get(position).toString());

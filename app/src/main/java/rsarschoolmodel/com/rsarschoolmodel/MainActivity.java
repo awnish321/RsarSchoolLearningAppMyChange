@@ -27,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -35,8 +36,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -71,13 +75,13 @@ import rsarschoolmodel.com.Common.ProgressHUD;
 import rsarschoolmodel.com.Common.SetterGetter_Sub_Chap;
 import rsarschoolmodel.com.ui.ActivityList.UnzipUtil;
 
+@RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_CALLBACK_CONSTANT = 100;
     private static final int REQUEST_PERMISSION_SETTING = 101;
-    String[] permissionsRequired = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA,Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.INTERNET,Manifest.permission.ACCESS_NETWORK_STATE,Manifest.permission.READ_PHONE_STATE };
+    String[] permissionsRequired = new String[]{ Manifest.permission.READ_MEDIA_VIDEO,Manifest.permission.CAMERA};
     private SharedPreferences permissionStatus;
     private boolean sentToSettings = false;
     String Device_Id,Mob_Id,Mob_Product,Mob_Brand,Mob_Manufacture,Mob_Model;
@@ -102,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     PackageInfo pinfo;
     public static String PACKAGE_NAME;
     String sVersionName;
-
+    CardView cardView;
     int sVersionCode;
     Spinner Spin;
     LinearLayout Lnr_Reg_Class;
@@ -113,24 +117,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ArrayList<String> DClass_Name;
     private RadioGroup radioUserGroup;
     private RadioButton radioUserButton;
-
     TextView text11,privacy,about,forget_details;
     Dialog otpdialog;
     String scode,sname,semail,smob,s10,s11,s12,s13,getemail;
     Intent getintents;
     ProgressHUD dialogoo;
     EditText ettext;
+    Context context;
+    ImageView imageView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context=MainActivity.this;
         getintents=getIntent();
         //  FirebaseApp.initializeApp(MainActivity.this);
-        permissionStatus = getSharedPreferences("permissionStatus",MODE_PRIVATE);
-        // creating connection detector class instance
         cd = new ConnectionDetector(getApplicationContext());
-        //-- To take permission ------------------
-        GetAndroidPermission();
+        isInternetPresent = cd.isConnectingToInternet();
         PACKAGE_NAME = getApplicationContext().getPackageName();
         try {
             pinfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -140,25 +143,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         sVersionCode = pinfo.versionCode; // 1
         sVersionName = pinfo.versionName; // 1.0
-        ButtonsDetails();
-
-        //----- Device Details
-        GetDevicedetails();
+        permissionStatus = getSharedPreferences("permissionStatus", MODE_PRIVATE);
         preferences = getSharedPreferences("RSAR_School_Model", Context.MODE_PRIVATE);
         Pref_School_UI = preferences.getString("Rsar_School_UI", "");
-        Str_Otp_Value = preferences.getString("Rsar_Otp_Value", "");//Rsar_Otp_Value
-        if(Pref_School_UI.isEmpty()) {
-            Toast.makeText(getApplicationContext(), "Please Enter the Activation Code.", Toast.LENGTH_SHORT).show();
-        }
-        else {
+        Str_Otp_Value = preferences.getString("Rsar_Otp_Value", "");
+        if(!Pref_School_UI.isEmpty()) {
             Intent intent = new Intent(MainActivity.this, ClassNew.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         }
-        privacy=findViewById(R.id.text34);
-        about=findViewById(R.id.text35);
-        forget_details=findViewById(R.id.forgets);
-
-
+        ButtonsDetails();
+        GetDevicedetails();
+        checkAndroidPermission();
+        privacy=findViewById(R.id.txtPrivacyPolicy);
+        about=findViewById(R.id.txtAboutUs);
+        forget_details=findViewById(R.id.txtForgets);
         privacy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -238,8 +237,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
     public void SendMsg() {
-
-
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
         String urlmanual = Networking.url+"forgotDetails.php?";
 
@@ -326,12 +323,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     private void ButtonsDetails() {
 
-        Et_Activation_Code=(EditText)findViewById(R.id.ET_Activation_Code);
-        Et_Stu_Name=(EditText)findViewById(R.id.ET_Name);
-        Et_Email=(EditText)findViewById(R.id.ET_Email);
-        Et_Mob_no=(EditText)findViewById(R.id.ET_Mobile_No);
-        Spin= findViewById(R.id.spinner);
+        Et_Activation_Code=(EditText)findViewById(R.id.edtActivationCode);
+        Et_Stu_Name=(EditText)findViewById(R.id.edtName);
+        Et_Email=(EditText)findViewById(R.id.edtEmailId);
+        Et_Mob_no=(EditText)findViewById(R.id.edtMobileNumber);
+        cardView =findViewById(R.id.cardLogo);
+        imageView =findViewById(R.id.imgLogout);
+//        Spin= findViewById(R.id.spinner);
 
+        cardView.setVisibility(View.GONE);
+        imageView.setVisibility(View.GONE);
         scode=Et_Activation_Code.getText().toString();
         sname=Et_Stu_Name.getText().toString();
         semail=Et_Email.getText().toString();
@@ -349,59 +350,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //Toast.makeText(this, "n="+s11+"e="+s12+"m="+s13+"", Toast.LENGTH_SHORT).show();
         //  Spin.setOnItemSelectedListener(this);
-        Lnr_Reg_Class=(LinearLayout)findViewById(R.id.Reg_Class);
-        Btn_Submit =(Button)findViewById(R.id.Btn_Submit);
+//        Lnr_Reg_Class=(LinearLayout)findViewById(R.id.Reg_Class);
+        Btn_Submit =(Button)findViewById(R.id.btnSubmit);
         Btn_Submit.setOnClickListener(this);
     }
     @Override
     public void onClick(View v) {
-
         if(v == Btn_Submit) {
-            if (Et_Activation_Code.getText().toString().trim().isEmpty()) {
-                Toast.makeText(getApplicationContext(), "Please Enter the Activation Code.", Toast.LENGTH_SHORT).show();
-            }
-            if (Et_Stu_Name.getText().toString().trim().isEmpty()) {
-                Toast.makeText(getApplicationContext(), "Please Enter the Name.", Toast.LENGTH_SHORT).show();
-            }
-            if (Et_Email.getText().toString().trim().isEmpty()) {
-                Toast.makeText(getApplicationContext(), "Please Enter the Email Id.", Toast.LENGTH_SHORT).show();
-            }
-            if (Et_Mob_no.getText().toString().trim().isEmpty()) {
-                Toast.makeText(getApplicationContext(), "Please Enter the Mobile No.", Toast.LENGTH_SHORT).show();
-            }
-            else {
-
-                Str_activation_Code = Et_Activation_Code.getText().toString().trim();
-                Str_Stu_Name = Et_Stu_Name.getText().toString().trim();
-                Str_Mobile = Et_Mob_no.getText().toString().trim();
-                Str_Email_Id = Et_Email.getText().toString().trim();
-                isInternetPresent = cd.isConnectingToInternet();
-                // check for Internet status
-                if (isInternetPresent) {
-                    ActivationCodeURL();
-                    String message = "Please Wait....";
-                    dialog = new ProgressHUD(MainActivity.this, R.style.ProgressHUD);
-                    dialog.setTitle("");
-                    dialog.setContentView(R.layout.progress_hudd);
-                    if (message == null || message.length() == 0) {
-                        dialog.findViewById(R.id.message).setVisibility(View.GONE);
-                    } else {
-                        TextView txt = (TextView) dialog.findViewById(R.id.message);
-                        txt.setText(message);
-                    }
-                    dialog.setCancelable(true);
-                    dialog.getWindow().getAttributes().gravity = Gravity.CENTER;
-                    WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
-                    lp.dimAmount = 0.2f;
-                    dialog.getWindow().setAttributes(lp);
-                    dialog.show();
-                } else {
-                    // Internet connection is not present
-                    // Ask user to connect to Internet
-                    Misc.showAlertDialog(MainActivity.this, "No Internet Connection",
-                            "You don't have internet connection.", false);
-                }
-            }
+            checkAndroidPermission1();
         }
     }
     private void ActivationCodeURL() {
@@ -452,15 +408,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     editor.putString("Rsar_Sch_Bgcol_Name",  Str_Sch_Name_Color);
                                     editor.putString("Rsar_Otp_Value",  Str_Otp_value);
                                     editor.putString("Rsar_Email_id",  Str_Otp_value);
-
                                     editor.putString("Rsar_Pref_Email",  Pre_Email_Id);
                                     editor.putString("Rsar_Pref_Mobile",  Pre_Mob_No);
                                     // Check in Splash screen the Value True
-                                    editor.commit();
                                     editor.apply();
 
                                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                                        unzipLocation =  getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+"/.RSARSchoolModel"+"/";
+                                        unzipLocation =  context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+"/.RSARSchoolModel"+"/";
                                     }else{
                                         unzipLocation =  Environment.getExternalStorageDirectory()+"/.RSARSchoolModel"+"/";
                                     }
@@ -492,13 +446,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         @Override
                                         public void onClick(View v) {
                                             dialoga.dismiss();
-
                                         }
                                     });
                                     dialoga.show();
                                     System.out.println("fuckoff"+"    "+Str_Status);
                                 }
-
                             }
 
                             if (dialog.isShowing())
@@ -550,16 +502,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mProgressDialog.setMessage("Loading..");
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setCancelable(false);
-		 		/*mProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener(){
-		            // Set a click listener for progress dialog cancel button
-		            @Override
-		            public void onClick(DialogInterface dialog, int which){
-		                // dismiss the progress dialog
-		            	mProgressDialog.dismiss();
-		                // Tell the system about cancellation
-		                isCanceled = true;
-		            }
-		        });*/
             mProgressDialog.show();
         }
         @Override
@@ -572,24 +514,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int lenghtOfFile = conexion.getContentLength();
                 InputStream input = new BufferedInputStream(url.openStream());
                 OutputStream output = new FileOutputStream(zipFile);
-                System.out.println("tgtgtgttg"+" "+lenghtOfFile);
                 if(lenghtOfFile == 0)
                 {
-                    showAlertDialog(MainActivity.this, "Error In Internet Connection",
-                            "You don't have proper internet connection.", false);
+                    showAlertDialog(context, "Error In Internet Connection", "You don't have proper internet connection.", false);
                 }
                 byte data[] = new byte[1024];
                 long total = 0;
                 while ((count = input.read(data)) != -1) {
                     total += count;
                     publishProgress(""+(int)((total*100)/lenghtOfFile));
-                    System.out.println("fgfffff"+" "+(int)((total*100)/lenghtOfFile));
                     output.write(data, 0, count);
                 }
                 output.close();
                 input.close();
                 result = "true";
-
             } catch (Exception e) {
                 result = "false";
             }
@@ -630,7 +568,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected Boolean doInBackground(String... params) {
             String filePath = params[0];
             String destinationPath = params[1];
-
             File archive = new File(filePath);
             try {
                 ZipFile zipfile = new ZipFile(archive);
@@ -654,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ///button hide and show
             //Toast.makeText(MainActivity.this, "Downloading completed...", Toast.LENGTH_LONG).show();
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                filev = new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), Str_Fd_School_name+".zip");
+                filev = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), Str_Fd_School_name+".zip");
             }else{
                 filev = new File(Environment.getExternalStorageDirectory(), Str_Fd_School_name+".zip");
             }
@@ -662,7 +599,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             scode=Et_Activation_Code.getText().toString();
             deleted_zip = filev.delete();
             Intent intent = new Intent(MainActivity.this, ClassNew.class);
-
             intent.putExtra("code",scode);
             intent.putExtra("name",sname );
             intent.putExtra("email", Pre_Email_Id);
@@ -672,8 +608,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             System.out.println("dfdfdfdfdddddd"+"   "+filev);
         }
-        private void unzipEntry(ZipFile zipfile, ZipEntry entry,
-                                String outputDir) throws IOException {
+        private void unzipEntry(ZipFile zipfile, ZipEntry entry, String outputDir) throws IOException {
 
             if (entry.isDirectory()) {
                 createDir(new File(outputDir, entry.getName()));
@@ -684,7 +619,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 createDir(outputFile.getParentFile());
             }
 
-            // Log.v("", "Extracting: " + entry);
             BufferedInputStream inputStream = new BufferedInputStream(zipfile.getInputStream(entry));
             BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
 
@@ -694,8 +628,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 outputStream.flush();
                 outputStream.close();
                 inputStream.close();
-
-
             }
         }
 
@@ -726,38 +658,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Showing Alert Message
         alertDialog.show();
     }
-    private void GetAndroidPermission() {
-        if(ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[1]) != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[2]) != PackageManager.PERMISSION_GRANTED){
-            if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[0])
-                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[1])
-                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[2])){
-                //Show Information about why you need the permission
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Need Multiple Permissions");
-                builder.setMessage("This app needs Camera and Storage permissions.");
-                builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                        ActivityCompat.requestPermissions(MainActivity.this,permissionsRequired,PERMISSION_CALLBACK_CONSTANT);
+    public void checkAndroidPermission() {
+        int version = Build.VERSION.SDK_INT;
+        if( version <= 32 ) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),  Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            {
+                requestStorageAndCameraPermission("111");
+
+            }
+        } else
+        {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            {
+                requestStorageAndCameraPermission("112");
+
+            }
+        }
+    }
+    public void requestStorageAndCameraPermission( String code){
+        if (code.matches("111")){
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA},1234);
+
+        }else {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_MEDIA_VIDEO,Manifest.permission.CAMERA},1234);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1234) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                int version = Build.VERSION.SDK_INT;
+                if( version <= 32 ) {
+                    if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+                    {
+                        SharedPreferences.Editor editor = permissionStatus.edit();
+                        editor.putBoolean(permissionsRequired[0], true);
+                        editor.apply();
                     }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
+                } else
+                {
+                    if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED)
+                    {
+                        SharedPreferences.Editor editor = permissionStatus.edit();
+                        editor.putBoolean(permissionsRequired[0], true);
+                        editor.apply();
                     }
-                });
-                builder.show();
-            } else if (permissionStatus.getBoolean(permissionsRequired[0],false)) {
-                //Previously Permission Request was cancelled with 'Dont Ask Again',
-                // Redirect to Settings after showing Information about why you need the permission
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    SharedPreferences.Editor editor = permissionStatus.edit();
+                    editor.putBoolean(permissionsRequired[1], true);
+                    editor.apply();
+                }
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+    public void checkAndroidPermission1() {
+        int version = Build.VERSION.SDK_INT;
+        if( version <= 32 ) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),  Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("Need Multiple Permissions");
-                builder.setMessage("This app needs Storage and Camera permissions.");
-                builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -766,207 +732,172 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Uri uri = Uri.fromParts("package", getPackageName(), null);
                         intent.setData(uri);
                         startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
-                        Toast.makeText(getBaseContext(), "Go to Permissions to Grant  Storage and Camera", Toast.LENGTH_LONG).show();
                     }
                 });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
-
                         dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
                     }
                 });
                 builder.show();
-            }  else {
-                //just request the permission
-                ActivityCompat.requestPermissions(MainActivity.this,permissionsRequired,PERMISSION_CALLBACK_CONSTANT);
-            }
-            SharedPreferences.Editor editor = permissionStatus.edit();
-            editor.putBoolean(permissionsRequired[0],true);
-            editor.commit();
-        } else {
-            //You already have the permission, just go ahead.
-            proceedAfterPermission();
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == PERMISSION_CALLBACK_CONSTANT){
-            //check if all permissions are granted
-            boolean allgranted = false;
-            for(int i=0;i<grantResults.length;i++){
-                if(grantResults[i]==PackageManager.PERMISSION_GRANTED){
-                    allgranted = true;
-                } else {
-                    allgranted = false;
-                    break;
-                }
-            }
-
-            if(allgranted){
-                proceedAfterPermission();
-            } else if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[0])
-                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[1])
-                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,permissionsRequired[2])){
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Need Multiple Permissions");
-                builder.setMessage("This app needs Storage and Camera permissions.");
-                builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                        ActivityCompat.requestPermissions(MainActivity.this,permissionsRequired,PERMISSION_CALLBACK_CONSTANT);
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                builder.show();
-            } else {
-                // Toast.makeText(getBaseContext(),"Unable to get Permission",Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_PERMISSION_SETTING) {
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) == PackageManager.PERMISSION_GRANTED) {
-                //Got Permission
-                proceedAfterPermission();
-            }
-        }
-    }
-    private void proceedAfterPermission() {
-        //Toast.makeText(getBaseContext(), "We got All Permissions", Toast.LENGTH_LONG).show();
-    }
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        if (sentToSettings) {
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) == PackageManager.PERMISSION_GRANTED) {
-                //Got Permission
-                proceedAfterPermission();
-            }
-        }
-    }
-
-    private void DropDownService(){
-        // TODO Auto-generated method stub
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String urlmanual = Networking.url+"classDropdown.php?";
-        StringRequest postRequest = new StringRequest(Request.Method.POST, urlmanual,
-                new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
-
-
-                        try {
-                            vinsquesarrayList = new ArrayList<SetterGetter_Sub_Chap>();
-                            JSONArray array;	array = new JSONArray(response);
-                            JSONObject object = new JSONObject();
-                            for (int i = 0; i < array.length(); i++) {
-                                object = array.getJSONObject(i);
-
-
-                                Str_Status= object.get("Status").toString();
-
-                                Str_Msg = object.get("Message").toString();
-                                System.out.println("messsssss"+"  "+Str_Msg);
-                                if(Str_Status.equalsIgnoreCase("True")) {
-                                    DropClass_Data=object.getJSONArray("ClassData");
-                                    System.out.println("dinchiaaa"+"  "+object.get("ClassData").toString());
-                                    for(int j=0; j<DropClass_Data.length(); j++)
-                                    {
-                                        JSONObject ObjectData ;
-                                        ObjectData= new JSONObject(DropClass_Data.getJSONObject(j).toString()) ;
-                                        String ClassName = ObjectData.getString("Class_Name");
-                                        String ClassId = ObjectData.getString("Class_Id");
-                                        vinsgetter= new SetterGetter_Sub_Chap();
-                                        DClass_Name.add(ObjectData.getString("Class_Name"));
-                                        vinsgetter.setDropclassName(ObjectData.getString("Class_Name"));
-                                        vinsgetter.setDropclass_Id(ObjectData.getString("Class_Id"));
-                                        vinsquesarrayList.add(vinsgetter);
-                                        Spin.setAdapter(new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, DClass_Name));
-                                        /*ArrayAdapter adapter = new ArrayAdapter (getApplicationContext(), android.R.layout.simple_spinner_item, vinsquesarrayList);
-                                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                                        Spin.setAdapter(adapter);*/
-                                        Spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                            @Override
-                                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                                                try {
-                                                    Details= DropClass_Data.get(position).toString();
-                                                } catch (JSONException e) {
-                                                    // TODO Auto-generated catch block
-                                                    e.printStackTrace();
-                                                }
-                                                try {
-                                                    JSONObject myObject = new JSONObject(Details);
-                                                    DClass_ID= myObject.getString("Class_Id");
-                                                    // Toast.makeText(MainActivity.this,DClass_ID, Toast.LENGTH_LONG).show();
-                                                } catch (JSONException e) {
-                                                    // TODO Auto-generated catch block
-                                                    e.printStackTrace();
-                                                }
-
-                                            }
-
-                                            @Override
-                                            public void onNothingSelected(AdapterView<?> parent) {
-
-                                            }
-                                        });
-                                    }}
-                            }
-                            if (dialog.isShowing())
-                                dialog.dismiss();
-
-                        } catch (JSONException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // error
-
-                        try {
-                            Log.d("Error.Response", error.getMessage());
-
-                        } catch (Exception e) {
-                            // TODO: handle exception
-                        }
-
-
-                    }
-                }
-        ) {
-            @Override
-            protected HashMap<String, String> getParams()
+            }else if (ContextCompat.checkSelfPermission(getApplicationContext(),  Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             {
-
-                HashMap<String, String>  params = new HashMap<String, String>();
-                params.put("action", "classDropdown");// Second one u can changePref_Restric_Id
-
-                return params;
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
             }
-        };
-        queue.add(postRequest);
-
+            else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+                {
+                    editor.putBoolean(permissionsRequired[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+                {
+                    editor.putBoolean(permissionsRequired[1], true);
+                    editor.apply();
+                }
+                startSubmitActivity();
+            }
+        } else
+        {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),  Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED)
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            }else if (ContextCompat.checkSelfPermission(getApplicationContext(),  Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            }
+            else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED)
+                {
+                    editor.putBoolean(permissionsRequired[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+                {
+                    editor.putBoolean(permissionsRequired[1], true);
+                    editor.apply();
+                }
+                startSubmitActivity();
+            }
+        }
     }
-
+    private void startSubmitActivity() {
+        if (Et_Activation_Code.getText().toString().trim().isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Please Enter the Activation Code.", Toast.LENGTH_SHORT).show();
+        }
+        if (Et_Stu_Name.getText().toString().trim().isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Please Enter the Name.", Toast.LENGTH_SHORT).show();
+        }
+        if (Et_Email.getText().toString().trim().isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Please Enter the Email Id.", Toast.LENGTH_SHORT).show();
+        }
+        if (Et_Mob_no.getText().toString().trim().isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Please Enter the Mobile No.", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            Str_activation_Code = Et_Activation_Code.getText().toString().trim();
+            Str_Stu_Name = Et_Stu_Name.getText().toString().trim();
+            Str_Mobile = Et_Mob_no.getText().toString().trim();
+            Str_Email_Id = Et_Email.getText().toString().trim();
+            if (isInternetPresent) {
+                ActivationCodeURL();
+                String message = "Please Wait....";
+                dialog = new ProgressHUD(MainActivity.this, R.style.ProgressHUD);
+                dialog.setTitle("");
+                dialog.setContentView(R.layout.progress_hudd);
+                if (message == null || message.length() == 0) {
+                    dialog.findViewById(R.id.message).setVisibility(View.GONE);
+                } else {
+                    TextView txt = (TextView) dialog.findViewById(R.id.message);
+                    txt.setText(message);
+                }
+                dialog.setCancelable(true);
+                dialog.getWindow().getAttributes().gravity = Gravity.CENTER;
+                WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+                lp.dimAmount = 0.2f;
+                dialog.getWindow().setAttributes(lp);
+                dialog.show();
+            } else {
+                Misc.showAlertDialog(MainActivity.this, "No Internet Connection", "You don't have internet connection.", false);
+            }
+        }
+    }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 }
 

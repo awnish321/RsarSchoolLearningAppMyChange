@@ -2,36 +2,45 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:gravity="center_horizontal" >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center_horizontal">
 
     <LinearLayout
-        android:id="@+id/imageView1"
-        android:layout_width="300dp"
-        android:layout_height="100dp"
-        android:background="@drawable/selector"
-        android:orientation="vertical" >
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:padding="2dp"
+            app:cardCornerRadius="@dimen/dimen_10dp">
 
-            <TextView
-                android:id="@+id/textView1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <LinearLayout
+                android:id="@+id/llBackground"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="sssssss"
-                android:textColor="#FFFFFF"
-                android:textSize="15dp"
-                android:textStyle="bold" />
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/txtName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/_5sdp"
+                    android:gravity="center"
+                    android:text=""
+                    android:padding="@dimen/_5sdp"
+                    android:textColor="#FFFFFF"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
 
+            </LinearLayout>
 
-    
-   </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-    
+    </LinearLayout>
+
 </RelativeLayout>

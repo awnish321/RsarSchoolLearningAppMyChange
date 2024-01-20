@@ -8,7 +8,6 @@
         android:id="@+id/dia_ln_outline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
         android:orientation="vertical" >
         
         <LinearLayout 

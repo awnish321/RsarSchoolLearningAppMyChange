@@ -1,5 +1,6 @@
 package rsarschoolmodel.com.dynamics;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -8,13 +9,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
-
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -23,8 +25,11 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -57,183 +62,99 @@ import java.util.zip.ZipFile;
 import rsarschoolmodel.com.Common.ConnectionDetector;
 import rsarschoolmodel.com.Common.Networking;
 import rsarschoolmodel.com.Common.ProgressHUD;
+import rsarschoolmodel.com.rsarschoolmodel.ClassNew;
 import rsarschoolmodel.com.rsarschoolmodel.R;
 import rsarschoolmodel.com.ui.ActivityList.UnzipUtil;
 
+@RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
 public class ChapterList extends AppCompatActivity {
 
+    String[] permissionsRequired = new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA};
+    String[] permissionsRequired1 = new String[]{ Manifest.permission.READ_MEDIA_VIDEO,Manifest.permission.CAMERA};
+    private boolean sentToSettings = false;
+    private static final int REQUEST_PERMISSION_SETTING = 101;
+    private SharedPreferences permissionStatus;
     private RecyclerView recyclerView;
     private ArrayList<ChapterModel> chapterModels;
-    private  ChapterAdapter chapterAdapter;
-    public static Button Scan_Btn,Download_Btn;
-
+    private ChapterAdapter chapterAdapter;
+    public static Button Scan_Btn, Download_Btn;
     private static String mClassToLaunch;
     private static String mClassToLaunchPackage;
-
     ProgressHUD dialog;
     String message = "Please Wait....";
     ProgressDialog progressDialog;
 
-    // flag for Internet connection status
     Boolean isInternetPresent = false;
-
-    // Connection detector class
     ConnectionDetector cd;
     boolean doubleBackToExitPressedOnce;
-
-    String Pref_Bg_Code,Pref_Top_Bg_Code,Pref_Button_Bg,Pref_School_UI,Pref_School_name,Pref_School_Fb_Name,Pref_Restric_Id,Pref_Download_Show,Pref_Email_ID;
+    String Pref_Bg_Code, Pref_Top_Bg_Code, Pref_Button_Bg, Pref_School_UI, Pref_School_name, Pref_School_Fb_Name, Pref_Restric_Id, Pref_Download_Show, Pref_Email_ID;
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
-    String Str_Status,Str_Msg,Details,Book_Id,Str_Book_Name,Str_DB_Book_Name,Class_Id,Subject_Id,Str_Restrict_SD,DataSet_Name,Asses_Value,
-            Cl_Diff_Play;
 
+    String Str_Status, Str_Msg, Details, Book_Id, Str_Book_Name, Str_DB_Book_Name, Class_Id, Subject_Id, Str_Restrict_SD, DataSet_Name, Asses_Value, Cl_Diff_Play;
     private ProgressDialog mProgressDialog;
-
-    String unzipLocation ;
-    String zipFile ;
+    String unzipLocation;
+    String zipFile;
     public static String Value;
-
     boolean deleted_zip;
-
-    String Device_Id,Mob_Id,Mob_Product,Mob_Brand,Mob_Manufacture,Mob_Model;
-
+    String Device_Id, Mob_Id, Mob_Product, Mob_Brand, Mob_Manufacture, Mob_Model;
+    Context context;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_chapter_list);
+        context = ChapterList.this;
 
-
-        // creating connection detector class instance
         cd = new ConnectionDetector(getApplicationContext());
-
-
         preferences = getSharedPreferences("RSAR_School_Model", Context.MODE_PRIVATE);
-
         Pref_Download_Show = preferences.getString("Rsar_Show_Download", "");
         Pref_School_UI = preferences.getString("Rsar_School_UI", "");
         Pref_School_name = preferences.getString("Rsar_School_Name", "");
         Pref_Bg_Code = preferences.getString("Rsar_Bg_Code", "");
         Pref_Top_Bg_Code = preferences.getString("Rsar_Top_Bg_Code", "");
         Pref_Button_Bg = preferences.getString("Rsar_Button_Bg", "");
-        Pref_School_Fb_Name= preferences.getString("Rsar_Fd_School_Name", "");
+        Pref_School_Fb_Name = preferences.getString("Rsar_Fd_School_Name", "");
         Pref_Restric_Id = preferences.getString("Rsar_Restric_ID", "");
-        Pref_Email_ID= preferences.getString("Rsar_Pref_Email", "");
-
+        Pref_Email_ID = preferences.getString("Rsar_Pref_Email", "");
+        permissionStatus = getSharedPreferences("permissionStatus", MODE_PRIVATE);
         Class_Id = getIntent().getExtras().getString("Rsar_Class_Id");
-        Subject_Id= getIntent().getExtras().getString("Rsar_Subject_Id");
+        Subject_Id = getIntent().getExtras().getString("Rsar_Subject_Id");
         Book_Id = getIntent().getExtras().getString("Rsar_Book_Id");
-        Str_Book_Name= getIntent().getExtras().getString("Rsar_Book_Name");
+        Str_Book_Name = getIntent().getExtras().getString("Rsar_Book_Name");
         Cl_Diff_Play = getIntent().getExtras().getString("Rsar_Op_Diff_Play");
-
-        LinearLayout  ln_bg = (LinearLayout)findViewById(R.id.Lnr_Bg);
+        LinearLayout ln_bg = (LinearLayout) findViewById(R.id.Lnr_Bg);
         ln_bg.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
-
         GetDevicedetails();
-
-        TextView Sub_Title= (TextView)findViewById(R.id.Title_Sub_Chap) ;
+        TextView Sub_Title = (TextView) findViewById(R.id.Title_Sub_Chap);
         Sub_Title.setText("CHAPTERS");
-        Scan_Btn=(Button)findViewById(R.id.button_start);
-        Download_Btn=(Button)findViewById(R.id.button_Download);
-        recyclerView=(RecyclerView)findViewById(R.id.recyclerView);
+        Scan_Btn = (Button) findViewById(R.id.button_start);
+        Download_Btn = (Button) findViewById(R.id.button_Download);
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         Scan_Btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startARActivity();
+                checkPermissionBeforeScan();
             }
         });
-
-        ConnectionDetector detector=new ConnectionDetector(ChapterList.this);
-        if(detector.isConnectingToInternet())
-        {
-            GetChapterURl();
-            String message = "Please Wait....";
-            dialog = new ProgressHUD(ChapterList.this, R.style.ProgressHUD);
-            dialog.setTitle("");
-            dialog.setContentView(R.layout.progress_hudd);
-            if (message == null || message.length() == 0) {
-                dialog.findViewById(R.id.message).setVisibility(View.GONE);
-            } else {
-                TextView txt = (TextView) dialog.findViewById(R.id.message);
-                txt.setText(message);
-            }
-            dialog.setCancelable(true);
-
-            dialog.getWindow().getAttributes().gravity = Gravity.CENTER;
-            WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
-            lp.dimAmount = 0.2f;
-            dialog.getWindow().setAttributes(lp);
-
-            dialog.show();
-
-
-
-            // Toast.makeText(getApplicationContext(), "available", Toast.LENGTH_LONG).show();
-        }else
-        {
-            Str_DB_Book_Name= getIntent().getExtras().getString("Rsar_DB_Book_Name");
-            RecordDatabase database = new RecordDatabase(ChapterList.this);
-            chapterModels = database.getAllRecord(Str_DB_Book_Name);//CHANGE SUBJETC NAME HERE FOR MAKE IT DYNAMIC
-            if(chapterModels.size() != 0) {
-                setAdapterValue();
-               // Toast.makeText(getApplicationContext(), "not  available", Toast.LENGTH_LONG).show();
-            }
-            else{
-
-
-                final Dialog dialogss = new Dialog(ChapterList.this);
-                dialogss.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                dialogss.setContentView(R.layout.alert_dialog);
-                dialogss.setCancelable(true);
-
-                // set the custom dialog components - text, image and button
-                LinearLayout ln_outline=(LinearLayout)dialogss.findViewById(R.id.dia_ln_outline);
-                View view=(View) dialogss.findViewById(R.id.dia_view);
-                TextView Error_text = (TextView) dialogss.findViewById(R.id.dia_error_title);
-                TextView text = (TextView) dialogss.findViewById(R.id.dia_error_msg);
-                text.setText("Please Start your internet to load data.");
-
-
-                Button btn_yes = (Button) dialogss.findViewById(R.id.dia_b_yes);
-
-
-                ln_outline.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
-                view.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
-                Error_text.setTextColor(Color.parseColor(Pref_Bg_Code));
-                btn_yes.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
-                btn_yes.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialogss.dismiss();
-                        finish();
-                    }
-
-                });
-
-
-                dialogss.show();
-            }
-
-        }
-
     }
-
+    @Override
+    protected void onResume() {
+        checkAndroidPermission();
+        super.onResume();
+    }
     private void GetDevicedetails() {
-
-
 
         Device_Id = Settings.Secure.getString(getApplicationContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID);
         Mob_Id = Build.ID;
-        Mob_Product= Build.PRODUCT;
-        Mob_Brand= Build.BRAND;
-        Mob_Manufacture= Build.MANUFACTURER;
+        Mob_Product = Build.PRODUCT;
+        Mob_Brand = Build.BRAND;
+        Mob_Manufacture = Build.MANUFACTURER;
         Mob_Model = Build.MODEL;
     }
-    // Starts the chosen activity
-    private void startARActivity()
-    {
-        try{
+    private void startARActivity() {
+        try {
             mClassToLaunchPackage = getPackageName();
             mClassToLaunch = "rsarschoolmodel.com.app.VideoPlayback.VideoPlayback";
             Intent i = new Intent();
@@ -241,33 +162,25 @@ public class ChapterList extends AppCompatActivity {
             i.putExtra("Rsar_Cl_Diff_Play", Cl_Diff_Play);
             i.setClassName(mClassToLaunchPackage, mClassToLaunch);
             ChapterList.this.startActivity(i);
-            System.out.println("asasasa"+"   "+mClassToLaunch+"   "+mClassToLaunchPackage);
-        }
-        catch(Exception e){
-            System.out.println("gfgfgf"+"    "+e);
+            System.out.println("asasasa" + "   " + mClassToLaunch + "   " + mClassToLaunchPackage);
+        } catch (Exception e) {
+            System.out.println("gfgfgf" + "    " + e);
         }
     }
-
-
-    private void setAdapterValue()
-    {
-      //  Toast.makeText(getApplicationContext(), "offline", Toast.LENGTH_LONG).show();
-        chapterAdapter =new ChapterAdapter(ChapterList.this, chapterModels);
+    private void setAdapterValue() {
+        //  Toast.makeText(getApplicationContext(), "offline", Toast.LENGTH_LONG).show();
+        chapterAdapter = new ChapterAdapter(ChapterList.this, chapterModels);
         recyclerView.setAdapter(chapterAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
     }
-
     private void GetChapterURl() {
-
 
         // TODO Auto-generated method stub
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String urlmanual = Networking.url+"chapter.php";
+        String urlmanual = Networking.url + "chapter.php";
         StringRequest postRequest = new StringRequest(Request.Method.POST, urlmanual,
-                new Response.Listener<String>()
-                {
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         // response
@@ -276,18 +189,17 @@ public class ChapterList extends AppCompatActivity {
 
                         try {
                             RecordDatabase database = new RecordDatabase(ChapterList.this);
-                            String downloadStatus ="0";
+                            String downloadStatus = "0";
                             chapterModels = new ArrayList<>();
-                            JSONArray jsonArray=new JSONArray(response);
-                            JSONObject jsonObject=jsonArray.getJSONObject(0);
+                            JSONArray jsonArray = new JSONArray(response);
+                            JSONObject jsonObject = jsonArray.getJSONObject(0);
                             String Status = jsonObject.getString("Status");
                             Str_Msg = jsonObject.getString("Message");
 
-                            if(Status.equalsIgnoreCase("true"))
-                            {
+                            if (Status.equalsIgnoreCase("true")) {
                                 String className = jsonObject.getString("Class_Name");
                                 String Subject_Name = jsonObject.getString("Subject_Name");
-                              //  String Subject_Name="book"+Subject_Name_A;
+                                //  String Subject_Name="book"+Subject_Name_A;
                                 String Book_Name = jsonObject.getString("Book_Name");
                                 String School_UI = jsonObject.getString("School_UI");
                                 String Restrict_SD = jsonObject.getString("Restrict_SD");
@@ -295,77 +207,74 @@ public class ChapterList extends AppCompatActivity {
                                 String Message = jsonObject.getString("Message");
                                 String ChapterData = jsonObject.getString("ChapterData");
 
-                                 DataSet_Name = jsonObject.getString("Dataset_Name");
+                                DataSet_Name = jsonObject.getString("Dataset_Name");
                                 String DataSet_Link = jsonObject.getString("Dataset_Link");
 
 
                                 File dir;
-                                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                                    unzipLocation =  getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-                                            +"/.RSARSchoolModel"+"/"+Pref_School_Fb_Name+"/"+className+"/"+jsonObject.getString("Subject_Name")+"/"+Book_Name+"/"+"DataSet/";
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    unzipLocation = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                                            + "/.RSARSchoolModel" + "/" + Pref_School_Fb_Name + "/" + className + "/" + jsonObject.getString("Subject_Name") + "/" + Book_Name + "/" + "DataSet/";
                                     //System.out.println("dinaadddaaa" + "  "+ DwlndLink+" "+zip_Name+" "+Str_Book_Name);
-                                    Value=null;
+                                    Value = null;
 
                                     dir = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-                                    Log.d("pathget",""+unzipLocation);
-                                    Log.d("pathgett",""+dir);
-                                }else{
-                                    unzipLocation =  Environment.getExternalStorageDirectory()
-                                            +"/.RSARSchoolModel"+"/"+Pref_School_Fb_Name+"/"+className+"/"+jsonObject.getString("Subject_Name")+"/"+Book_Name+"/"+"DataSet/";
+                                    Log.d("pathget", "" + unzipLocation);
+                                    Log.d("pathgett", "" + dir);
+                                } else {
+                                    unzipLocation = Environment.getExternalStorageDirectory()
+                                            + "/.RSARSchoolModel" + "/" + Pref_School_Fb_Name + "/" + className + "/" + jsonObject.getString("Subject_Name") + "/" + Book_Name + "/" + "DataSet/";
                                     //System.out.println("dinaadddaaa" + "  "+ DwlndLink+" "+zip_Name+" "+Str_Book_Name);
-                                    Value=null;
+                                    Value = null;
 
                                     dir = Environment.getExternalStorageDirectory();
                                 }
 
 
-                                File file = new File(dir, "/.RSARSchoolModel"+"/"+Pref_School_Fb_Name+"/"+className+"/"+jsonObject.getString("Subject_Name")+"/"+Book_Name+"/"+"DataSet/"+DataSet_Name/*+".xml"*/ );
-                                System.out.println("FILEEEss" + "  "+ file+"  "+DataSet_Name+"  "+unzipLocation);
+                                File file = new File(dir, "/.RSARSchoolModel" + "/" + Pref_School_Fb_Name + "/" + className + "/" + jsonObject.getString("Subject_Name") + "/" + Book_Name + "/" + "DataSet/" + DataSet_Name/*+".xml"*/);
+                                System.out.println("FILEEEss" + "  " + file + "  " + DataSet_Name + "  " + unzipLocation);
                                 if (file.exists()) {
                                     //Do action
-                                    System.out.println("FILEEE EXIST" + "  "+ file+" "+"True");
+                                    System.out.println("FILEEE EXIST" + "  " + file + " " + "True");
 
 
-                                }else
-                                {
-                                    System.out.println("FILEEE EXIST" + "  "+ file+"  "+"False");
+                                } else {
+                                    System.out.println("FILEEE EXIST" + "  " + file + "  " + "False");
                                     DownloadMapAsync mew = new DownloadMapAsync();
                                     mew.execute(DataSet_Link);
                                 }
                                /*DownloadMapAsync mew = new DownloadMapAsync();
                                 mew.execute(DataSet_Link);*/
 
-                                Value=DataSet_Name+".zip";
-                                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                                    zipFile = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+"/"+DataSet_Name+".zip";
-                                }else{
-                                    zipFile = Environment.getExternalStorageDirectory()+"/"+DataSet_Name+".zip";
+                                Value = DataSet_Name + ".zip";
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    zipFile = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + "/" + DataSet_Name + ".zip";
+                                } else {
+                                    zipFile = Environment.getExternalStorageDirectory() + "/" + DataSet_Name + ".zip";
                                 }
 
 
-
-                                System.out.println("DATAAAAA" + "  "+ DataSet_Link+" "+DataSet_Name+" "+jsonObject.getString("Subject_Name"));
+                                System.out.println("DATAAAAA" + "  " + DataSet_Link + " " + DataSet_Name + " " + jsonObject.getString("Subject_Name"));
 
                                 JSONArray chapterArray = new JSONArray(ChapterData);
 
-                                for (int i=0; i<chapterArray.length(); i++) {
+                                for (int i = 0; i < chapterArray.length(); i++) {
 
                                     JSONObject chapterObject = chapterArray.getJSONObject(i);
 
-                                    String ZipName =  chapterObject.getString("Zip_Name");
+                                    String ZipName = chapterObject.getString("Zip_Name");
 
-                                    Asses_Value=  chapterObject.getString("Assessment_Value");
+                                    Asses_Value = chapterObject.getString("Assessment_Value");
 
-                                    System.out.println("Detailaaaa"+" "+Subject_Name+" "+Book_Name+"  "+ZipName);
+                                    System.out.println("Detailaaaa" + " " + Subject_Name + " " + Book_Name + "  " + ZipName);
 
-                                    if(database.getRecord(Book_Name, chapterObject.getString("Chapter_Id")).equals("1"))
-                                    {
-                                        downloadStatus ="1";
-                                        Log.e("downloadStatus", chapterObject.getString("Chapter_Id")+"\t"+downloadStatus);
+                                    if (database.getRecord(Book_Name, chapterObject.getString("Chapter_Id")).equals("1")) {
+                                        downloadStatus = "1";
+                                        Log.e("downloadStatus", chapterObject.getString("Chapter_Id") + "\t" + downloadStatus);
 
-                                    }else {
+                                    } else {
                                         downloadStatus = "0";
-                                        Log.e("downloadStatus", chapterObject.getString("Chapter_Id")+"\t"+downloadStatus);
+                                        Log.e("downloadStatus", chapterObject.getString("Chapter_Id") + "\t" + downloadStatus);
                                     }
 
                                 /*    public ChapterModel(String class_Name, String subject_Name,String book_Name, String school_UI, String restrict_SD, String class_ID, String message,
@@ -373,23 +282,22 @@ public class ChapterList extends AppCompatActivity {
                                             String download_Link, String Download_Status, String dataSet_Name)*/
 
 
-
-                                    chapterModels.add(new ChapterModel(className, Subject_Name,Book_Name, School_UI, Restrict_SD, Class_ID, Message,
+                                    chapterModels.add(new ChapterModel(className, Subject_Name, Book_Name, School_UI, Restrict_SD, Class_ID, Message,
                                             chapterObject.getString("Chapter_Id"), chapterObject.getString("Chapter_Name"),
                                             chapterObject.getString("Assessment_Name"), chapterObject.getString("Video_Name"),
                                             chapterObject.getString("DB_Name"),
-                                            chapterObject.getString("Download_Link"), downloadStatus, ZipName,Asses_Value,DataSet_Name));
+                                            chapterObject.getString("Download_Link"), downloadStatus, ZipName, Asses_Value, DataSet_Name));
 
-                                    insertData(Class_ID, className,Subject_Name, Book_Name, chapterObject.getString("Chapter_Id"),
+                                    insertData(Class_ID, className, Subject_Name, Book_Name, chapterObject.getString("Chapter_Id"),
                                             chapterObject.getString("Chapter_Name"), chapterObject.getString("Video_Name"),
-                                            chapterObject.getString("Download_Link"),downloadStatus,ZipName,Asses_Value,DataSet_Name);
+                                            chapterObject.getString("Download_Link"), downloadStatus, ZipName, Asses_Value, DataSet_Name);
 
                                 }
 
-                                if(chapterModels.size()!=0) {
+                                if (chapterModels.size() != 0) {
                                     setAdapterValue();
-                                }else {
-                                    System.out.println("LLLLAAAAA"+"   "+chapterModels.size());
+                                } else {
+                                    System.out.println("LLLLAAAAA" + "   " + chapterModels.size());
 
                                     final Dialog dialogss = new Dialog(ChapterList.this);
                                     dialogss.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -397,8 +305,8 @@ public class ChapterList extends AppCompatActivity {
                                     dialogss.setCancelable(true);
 
                                     // set the custom dialog components - text, image and button
-                                    LinearLayout ln_outline=(LinearLayout)dialogss.findViewById(R.id.dia_ln_outline);
-                                    View view=(View) dialogss.findViewById(R.id.dia_view);
+                                    LinearLayout ln_outline = (LinearLayout) dialogss.findViewById(R.id.dia_ln_outline);
+                                    View view = (View) dialogss.findViewById(R.id.dia_view);
                                     TextView Error_text = (TextView) dialogss.findViewById(R.id.dia_error_title);
                                     TextView text = (TextView) dialogss.findViewById(R.id.dia_error_msg);
                                     text.setText("Please Start your internet to load data.");
@@ -420,17 +328,10 @@ public class ChapterList extends AppCompatActivity {
 
                                     });
 
-
                                     dialogss.show();
                                 }
-
-
-
-
-                            }else
-                            {
+                            } else {
                                 //code when response is false
-
 
                                 final Dialog dialogss = new Dialog(ChapterList.this);
                                 dialogss.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -438,37 +339,26 @@ public class ChapterList extends AppCompatActivity {
                                 dialogss.setCancelable(true);
 
                                 // set the custom dialog components - text, image and button
-                                LinearLayout ln_outline=(LinearLayout)dialogss.findViewById(R.id.dia_ln_outline);
-                                View view=(View) dialogss.findViewById(R.id.dia_view);
+                                LinearLayout ln_outline = (LinearLayout) dialogss.findViewById(R.id.dia_ln_outline);
+                                View view = (View) dialogss.findViewById(R.id.dia_view);
                                 TextView Error_text = (TextView) dialogss.findViewById(R.id.dia_error_title);
                                 TextView text = (TextView) dialogss.findViewById(R.id.dia_error_msg);
                                 text.setText(Str_Msg);
 
-
                                 Button btn_yes = (Button) dialogss.findViewById(R.id.dia_b_yes);
-
 
                                 ln_outline.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
                                 view.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
                                 Error_text.setTextColor(Color.parseColor(Pref_Bg_Code));
                                 btn_yes.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
 
-
-
                                 btn_yes.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-
-
-
                                         dialogss.dismiss();
-
                                     }
-
-
                                 });
                                 dialogss.show();
-
                             }
                             if (dialog.isShowing())
                                 dialog.dismiss();
@@ -478,8 +368,7 @@ public class ChapterList extends AppCompatActivity {
                         }
                     }
                 },
-                new Response.ErrorListener()
-                {
+                new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // error
@@ -492,10 +381,9 @@ public class ChapterList extends AppCompatActivity {
                 }
         ) {
             @Override
-            protected HashMap<String, String> getParams()
-            {
-                HashMap<String, String>  params = new HashMap<String, String>();
-                params.put("School_UI",Pref_School_UI);
+            protected HashMap<String, String> getParams() {
+                HashMap<String, String> params = new HashMap<String, String>();
+                params.put("School_UI", Pref_School_UI);
                 params.put("cId", Class_Id);
                 params.put("email", Pref_Email_ID);
                 params.put("sId", Subject_Id);// Second one u can change
@@ -510,18 +398,14 @@ public class ChapterList extends AppCompatActivity {
         };
         queue.add(postRequest);
     }
-
-
-
-
     private void insertData(String classID, String className, String subjectName, String book_Name, String chapterId, String Chapter_Name, String videoName,
-                            String downloadLink, String status,String zipName,String assesValue,String dataSetName) {
+                            String downloadLink, String status, String zipName, String assesValue, String dataSetName) {
         RecordDatabase database = new RecordDatabase(ChapterList.this);
-        int i=database.getProfilesCount();
+        int i = database.getProfilesCount();
         if (database.CheckIsDataAlreadyInDBorNot(book_Name, chapterId)) {
-            Log.e("PARAMS", "No NEED TO INSERT "+i);
+            Log.e("PARAMS", "No NEED TO INSERT " + i);
         } else {
-            Log.e("PARAMS", "INSERT "+i);
+            Log.e("PARAMS", "INSERT " + i);
             ContentValues contentValue = new ContentValues();
             contentValue.put(RecordDatabase.Save_Class_ID, classID);
             contentValue.put(RecordDatabase.Save_Class_Name, className);
@@ -539,12 +423,8 @@ public class ChapterList extends AppCompatActivity {
         }
     }
 
-
     public class DownloadMapAsync extends AsyncTask<String, String, String> {
-        String result ="";
-
-
-
+        String result = "";
 
         @Override
         protected void onPreExecute() {
@@ -578,9 +458,8 @@ public class ChapterList extends AppCompatActivity {
                 int lenghtOfFile = conexion.getContentLength();
                 InputStream input = new BufferedInputStream(url.openStream());
                 OutputStream output = new FileOutputStream(zipFile);
-                System.out.println("tgtgtgttg"+" "+lenghtOfFile);
-                if(lenghtOfFile == 0)
-                {
+                System.out.println("tgtgtgttg" + " " + lenghtOfFile);
+                if (lenghtOfFile == 0) {
                     showAlertDialog(ChapterList.this, "Error In Internet Connection",
                             "You don't have proper internet connection.", false);
                 }
@@ -590,8 +469,8 @@ public class ChapterList extends AppCompatActivity {
                 while ((count = input.read(data)) != -1) {
                     total += count;
 
-                    publishProgress(""+(int)((total*100)/lenghtOfFile));
-                    System.out.println("fgfffff"+" "+(int)((total*100)/lenghtOfFile));
+                    publishProgress("" + (int) ((total * 100) / lenghtOfFile));
+                    System.out.println("fgfffff" + " " + (int) ((total * 100) / lenghtOfFile));
                     output.write(data, 0, count);
                 }
                 output.close();
@@ -605,8 +484,9 @@ public class ChapterList extends AppCompatActivity {
             return null;
 
         }
+
         protected void onProgressUpdate(String... progress) {
-            Log.d("ANDRO_ASYNC",progress[0]);
+            Log.d("ANDRO_ASYNC", progress[0]);
             mProgressDialog.setProgress(Integer.parseInt(progress[0]));
         }
 
@@ -615,21 +495,18 @@ public class ChapterList extends AppCompatActivity {
             mProgressDialog.dismiss();
 
 
-
-            if(result.equalsIgnoreCase("true")){
+            if (result.equalsIgnoreCase("true")) {
                 try {
                     unzip();
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-            }
-            else{
+            } else {
 
             }
         }
     }
-
     public void unzip() throws IOException {
         mProgressDialog = new ProgressDialog(ChapterList.this);
         mProgressDialog.setMessage("Please Wait...");
@@ -638,10 +515,7 @@ public class ChapterList extends AppCompatActivity {
         mProgressDialog.show();
         new UnZipTask().execute(zipFile, unzipLocation);
     }
-
-
     private class UnZipTask extends AsyncTask<String, Void, Boolean> {
-
 
         @SuppressWarnings("rawtypes")
         @Override
@@ -654,7 +528,7 @@ public class ChapterList extends AppCompatActivity {
 
 
                 ZipFile zipfile = new ZipFile(archive);
-                for (Enumeration e = zipfile.entries(); e.hasMoreElements();) {
+                for (Enumeration e = zipfile.entries(); e.hasMoreElements(); ) {
                     ZipEntry entry = (ZipEntry) e.nextElement();
                     unzipEntry(zipfile, entry, destinationPath);
                 }
@@ -677,17 +551,17 @@ public class ChapterList extends AppCompatActivity {
 
             ///button hide and show
             File filev;
-          //  Toast.makeText(ChapterList.this, "Downloading completed...", Toast.LENGTH_LONG).show();
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                filev = new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), DataSet_Name+".zip");
-            }else{
-                filev = new File(Environment.getExternalStorageDirectory(), DataSet_Name+".zip");
+            //  Toast.makeText(ChapterList.this, "Downloading completed...", Toast.LENGTH_LONG).show();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                filev = new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), DataSet_Name + ".zip");
+            } else {
+                filev = new File(Environment.getExternalStorageDirectory(), DataSet_Name + ".zip");
             }
 
             deleted_zip = filev.delete();
 
 
-            System.out.println("dfdfdfdfdddddd"+"   "+filev);
+            System.out.println("dfdfdfdfdddddd" + "   " + filev);
         }
 
 
@@ -726,9 +600,8 @@ public class ChapterList extends AppCompatActivity {
             if (!dir.mkdirs()) {
                 throw new RuntimeException("Can not create dir " + dir);
             }
-        }}
-
-
+        }
+    }
     @SuppressWarnings("deprecation")
     public void showAlertDialog(Context context, String title, String message, Boolean status) {
         AlertDialog alertDialog = new AlertDialog.Builder(context).create();
@@ -750,6 +623,323 @@ public class ChapterList extends AppCompatActivity {
 
         // Showing Alert Message
         alertDialog.show();
+    }
+    private void checkAndroidPermission() {
+
+        int version = Build.VERSION.SDK_INT;
+        if (version <= 32) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
+                        startActivity(new Intent(context, ClassNew.class));
+                        finishAffinity();
+                    }
+                });
+                builder.show();
+            }
+            else if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                        startActivity(new Intent(context, ClassNew.class));
+                        finishAffinity();
+                    }
+                });
+                builder.show();
+            } else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired[1], true);
+                    editor.apply();
+                }
+                loadChapterList();
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
+                        startActivity(new Intent(context, ClassNew.class));
+                        finishAffinity();
+                    }
+                });
+                builder.show();
+            } else if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                        startActivity(new Intent(context, ClassNew.class));
+                        finishAffinity();
+                    }
+                });
+                builder.show();
+            } else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired1[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired1[1], true);
+                    editor.apply();
+                }
+                loadChapterList();
+            }
+        }
+    }
+    private void loadChapterList() {
+        ConnectionDetector detector = new ConnectionDetector(ChapterList.this);
+        if (detector.isConnectingToInternet()) {
+            GetChapterURl();
+            String message = "Please Wait....";
+            dialog = new ProgressHUD(ChapterList.this, R.style.ProgressHUD);
+            dialog.setTitle("");
+            dialog.setContentView(R.layout.progress_hudd);
+            if (message == null || message.length() == 0) {
+                dialog.findViewById(R.id.message).setVisibility(View.GONE);
+            } else {
+                TextView txt = (TextView) dialog.findViewById(R.id.message);
+                txt.setText(message);
+            }
+            dialog.setCancelable(true);
+            dialog.getWindow().getAttributes().gravity = Gravity.CENTER;
+            WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+            lp.dimAmount = 0.2f;
+            dialog.getWindow().setAttributes(lp);
+            dialog.show();
+        } else {
+            Str_DB_Book_Name = getIntent().getExtras().getString("Rsar_DB_Book_Name");
+            RecordDatabase database = new RecordDatabase(ChapterList.this);
+            chapterModels = database.getAllRecord(Str_DB_Book_Name);//CHANGE SUBJETC NAME HERE FOR MAKE IT DYNAMIC
+            if (chapterModels.size() != 0) {
+                setAdapterValue();
+                // Toast.makeText(getApplicationContext(), "not  available", Toast.LENGTH_LONG).show();
+            } else {
+                final Dialog dialogss = new Dialog(ChapterList.this);
+                dialogss.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialogss.setContentView(R.layout.alert_dialog);
+                dialogss.setCancelable(true);
+                // set the custom dialog components - text, image and button
+                LinearLayout ln_outline = (LinearLayout) dialogss.findViewById(R.id.dia_ln_outline);
+                View view = (View) dialogss.findViewById(R.id.dia_view);
+                TextView Error_text = (TextView) dialogss.findViewById(R.id.dia_error_title);
+                TextView text = (TextView) dialogss.findViewById(R.id.dia_error_msg);
+                text.setText("Please Start your internet to load data.");
+                Button btn_yes = (Button) dialogss.findViewById(R.id.dia_b_yes);
+                ln_outline.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
+                view.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
+                Error_text.setTextColor(Color.parseColor(Pref_Bg_Code));
+                btn_yes.setBackgroundColor(Color.parseColor(Pref_Bg_Code));
+                btn_yes.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialogss.dismiss();
+                        finish();
+                    }
+                });
+                dialogss.show();
+            }
+        }
+    }
+    private void checkPermissionBeforeScan() {
+
+        int version = Build.VERSION.SDK_INT;
+        if (version <= 32) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            } else if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            } else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired[1], true);
+                    editor.apply();
+                }
+                startARActivity();
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            } else if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Need Multiple Permissions");
+                builder.setMessage("Please allow Camera And Storage permissions");
+                builder.setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        sentToSettings = true;
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Deny", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        Toast.makeText(getBaseContext(), "This app needs Camera And Storage permissions.", Toast.LENGTH_LONG).show();
+                    }
+                });
+                builder.show();
+            } else {
+                SharedPreferences.Editor editor = permissionStatus.edit();
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired1[0], true);
+                    editor.apply();
+                }
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    editor.putBoolean(permissionsRequired1[1], true);
+                    editor.apply();
+                }
+                startARActivity();
+            }
+        }
     }
 
 }

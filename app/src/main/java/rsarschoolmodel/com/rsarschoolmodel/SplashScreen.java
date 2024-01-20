@@ -33,28 +33,17 @@ import rsarschoolmodel.com.Common.Networking;
 public class SplashScreen extends Activity {
 
     private static long SPLASH_MILLIS = 750;
-
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
-
-    // flag for Internet connection status
     Boolean isInternetPresent = false;
-// Connection detector class
     ConnectionDetector cd;
-
     String Pref_School_UI,Pref_Restric_Id,Pref_UserType,Pref_UserClassID;
     String Device_Id,Mob_Id,Mob_Product,Mob_Brand,Mob_Manufacture,Mob_Model;
-
     private static final int TIME = 4 * 1000;// 4 seconds
-
-
     PackageInfo pinfo;
     public static String PACKAGE_NAME;
-
     String sVersionName;
-
     int sVersionCode;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -62,17 +51,11 @@ public class SplashScreen extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.splash_screen);
-        // creating connection detector class instance
         cd = new ConnectionDetector(getApplicationContext());
-
         GetDevicedetails();
-
         PACKAGE_NAME = getApplicationContext().getPackageName();
-
-
         try {
             pinfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
@@ -83,64 +66,40 @@ public class SplashScreen extends Activity {
         sVersionName = pinfo.versionName; // 1.0
 
         System.out.println("details version"+"  "+sVersionCode+" "+sVersionName+" "+PACKAGE_NAME);
-
         new Handler().postDelayed(new Runnable() {
-
             @Override
             public void run() {
-
-
                 preferences = getSharedPreferences("RSAR_School_Model", Context.MODE_PRIVATE);
-
                 Pref_School_UI = preferences.getString("Rsar_School_UI", "");
                 Pref_Restric_Id = preferences.getString("Rsar_Restric_ID", "");
-
                 isInternetPresent = cd.isConnectingToInternet();
 
-                // check for Internet status
                 if (isInternetPresent) {
-
-
                     if (Pref_School_UI.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Please Enter the Details.", Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(SplashScreen.this,
-                                MainActivity.class);
-
+                        Intent intent = new Intent(SplashScreen.this, MainActivity.class);
                         startActivity(intent);
                         SplashScreen.this.finish();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     } else {
-
                         CheckActivation();
-
                     }
                 }
                 else
                 {
                     if (Pref_School_UI.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Please Enter the Details.", Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(SplashScreen.this,
-                                MainActivity.class);
-
+                        Intent intent = new Intent(SplashScreen.this, MainActivity.class);
                         startActivity(intent);
                         SplashScreen.this.finish();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     } else {
-
                         Intent intent = new Intent(SplashScreen.this, ClassNew.class);
-
                         startActivity(intent);
                         SplashScreen.this.finish();
-
-
-
                     }
                 }
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-
             }
-
-
         }, TIME);
 
         new Handler().postDelayed(new Runnable() {
@@ -148,15 +107,11 @@ public class SplashScreen extends Activity {
             public void run() {
             }
         }, TIME);
-
     }
 
     private void GetDevicedetails() {
 
-
-
-        Device_Id = Settings.Secure.getString(getApplicationContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID);
+        Device_Id = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         Mob_Id = android.os.Build.ID;
         Mob_Product= android.os.Build.PRODUCT;
         Mob_Brand= android.os.Build.BRAND;
@@ -164,10 +119,7 @@ public class SplashScreen extends Activity {
         Mob_Model = android.os.Build.MODEL;
     }
 
-
     private void CheckActivation() {
-
-        // TODO Auto-generated method stub
 
         RequestQueue queue = Volley.newRequestQueue(this);
         String urlmanual = Networking.url+"checkActivation.php?";
@@ -176,71 +128,37 @@ public class SplashScreen extends Activity {
                 {
                     @Override
                     public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
-
-
                         try {
                             final JSONArray array;
                             array = new JSONArray(response);
-
-
                             for (int i = 0; i < array.length(); i++) {
-
                                 JSONObject object;
-
-
                                 object = new JSONObject(array.getString(i).toString());
-
-
-
                                 String Status=object.getString("Status");
                                 String Msg=object.getString("Message");
-
-                                System.out.println("Activation" + " "+Status+"   "+Msg );
-
                                 if(Status.equalsIgnoreCase("True")) {
-
-
                                     Intent intent = new Intent(SplashScreen.this, ClassNew.class);
-
                                     startActivity(intent);
                                     SplashScreen.this.finish();
-
-
-
-                                    System.out.println("Activationupdate" + " "+Status+"   "+Msg );
-
+                                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                                 }else
                                 {
                                     Toast.makeText(SplashScreen.this, Msg, Toast.LENGTH_SHORT).show();
-
-
-
                                     preferences = getSharedPreferences("RSAR_School_Model", 0);
                                     editor = preferences.edit();
                                     editor.clear();
                                     editor.commit();
-                                    Intent intent1 = new Intent(SplashScreen.this,
-                                            MainActivity.class);
-
+                                    Intent intent1 = new Intent(SplashScreen.this, MainActivity.class);
                                     startActivity(intent1);
                                     SplashScreen.this.finish();
-
+                                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                                 }
-
                             }
                         } catch (JSONException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
-
-
-
                     }
-
-
-
                 },
                 new Response.ErrorListener()
                 {
@@ -262,14 +180,10 @@ public class SplashScreen extends Activity {
                 params.put("version_name", sVersionName);
                 params.put("version_code", Integer.toString(sVersionCode));
                 params.put("Device_Id", Device_Id);
-
                 return params;
             }
         };
         queue.add(postRequest);
-
-
-
     }
 
     @Override
